@@ -1,4 +1,4 @@
-import { h, render, Component } from 'preact';
+import { h, render } from 'preact';
 import ExchangeWidget from './components/ExchangeWidget';
 
 const widget = {

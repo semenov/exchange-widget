@@ -1,34 +1,34 @@
 import { h, Component } from 'preact';
-
-const currencySymbols = {
-    GBP: '£',
-    EUR: '€',
-    USD: '$'
-};
+import config from '../config';
 
 export default class CurrencyPanel extends Component {
-    render({currency, secondCurrency, rate, amount, editable, onAmountChange, onCurrencyChange}) {
-
-        function handleAmountChange(event) {
-            if (onAmountChange) {
-                onAmountChange(event.target.value);
-            }
+    handleAmountChange(event) {
+        if (this.props.onAmountChange) {
+            this.props.onAmountChange(event.target.value);
         }
+    }
 
-        const handleCurrencyChange = currencyType => event => {
-            onCurrencyChange(currencyType);
+    handleCurrencyChange(currencyType) {
+        return event => {
+            this.props.onCurrencyChange(currencyType)
         };
+    }
 
+    render({currency, secondCurrency, rate, amount, editable}) {
         let amountControl;
         if (editable) {
-            amountControl = <input type="number" class="CurrencyPanel_amount" value={amount} onInput={handleAmountChange}/>;
+            amountControl = <input type="number"
+                                   class="CurrencyPanel_amount"
+                                   value={amount}
+                                   onInput={::this.handleAmountChange}/>;
         } else {
             amountControl = <div class="CurrencyPanel_amount">{amount.toFixed(2)}</div>;
         }
 
         let exchangeRate = '';
         if (rate) {
-            exchangeRate = `${currencySymbols[currency]} 1 = ${currencySymbols[secondCurrency]} ${rate.toFixed(4)}`;
+            exchangeRate = `${config.currencySymbols[currency]} 1 = ` +
+                `${config.currencySymbols[secondCurrency]} ${rate.toFixed(4)}`;
         }
 
         return (
@@ -37,9 +37,11 @@ export default class CurrencyPanel extends Component {
                 {amountControl}
                 <div class="CurrencyPanel_rate">{exchangeRate}</div>
                 <div class="CurrencyPanel_switch">
-                    <button class="CurrencyPanel_switchButton" onClick={handleCurrencyChange('GBP')}>GBP</button>
-                    <button class="CurrencyPanel_switchButton" onClick={handleCurrencyChange('EUR')}>EUR</button>
-                    <button class="CurrencyPanel_switchButton" onClick={handleCurrencyChange('USD')}>USD</button>
+                    {config.currencies.map(currency =>
+                        <button class="CurrencyPanel_switchButton" onClick={::this.handleCurrencyChange(currency)}>
+                            {currency}
+                        </button>
+                    )}
                 </div>
             </div>
         );

@@ -426,13 +426,6 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
-/** Create an Event handler function that sets a given state property.
- *	@param {Component} component	The component whose state should be updated
- *	@param {string} key				A dot-notated key path to update in the component's state
- *	@param {string} eventPath		A dot-notated key path to the value that should be retrieved from the Event or component
- *	@returns {function} linkedStateHandler
- *	@private
- */
 function createLinkedState(component, key, eventPath) {
 	var path = key.split('.'),
 	    p0 = path[0];
@@ -453,9 +446,6 @@ function createLinkedState(component, key, eventPath) {
 	};
 }
 
-/** Managed queue of dirty components to be re-rendered */
-
-// items/itemsOffline swap on each rerender() call (just a simple pool technique)
 var items = [];
 
 function enqueueRender(component) {
@@ -473,12 +463,6 @@ function rerender() {
 	}
 }
 
-/** Check if a VNode is a reference to a stateless functional component.
- *	A function component is represented as a VNode whose `nodeName` property is a reference to a function.
- *	If that function is not a Component (ie, has no `.render()` method on a prototype), it is considered a stateless functional component.
- *	@param {VNode} vnode	A VNode
- *	@private
- */
 function isFunctionalComponent(vnode) {
   var nodeName = vnode && vnode.nodeName;
   return nodeName && isFunction(nodeName) && !(nodeName.prototype && nodeName.prototype.render);
@@ -492,11 +476,6 @@ function buildFunctionalComponent(vnode, context) {
   return vnode.nodeName(getNodeProps(vnode), context || EMPTY);
 }
 
-/** Check if two nodes are equivalent.
- *	@param {Element} node
- *	@param {VNode} vnode
- *	@private
- */
 function isSameNodeType(node, vnode) {
 	if (isString(vnode)) {
 		return node instanceof Text;
@@ -536,7 +515,6 @@ function getNodeProps(vnode) {
 	return props;
 }
 
-/** Removes a given DOM Node from its parent. */
 function removeNode(node) {
 	var p = node.parentNode;
 	if (p) p.removeChild(node);
@@ -618,8 +596,6 @@ function eventProxy(e) {
 	return this._listeners[e.type](options.event && options.event(e) || e);
 }
 
-/** DOM node pool, keyed on nodeName. */
-
 var nodes = {};
 
 function collectNode(node) {
@@ -640,7 +616,6 @@ function createNode(nodeName, isSvg) {
 	return node;
 }
 
-/** Diff recursion count, used to track the end of the diff cycle. */
 var mounts = [];
 
 /** Diff recursion count, used to track the end of the diff cycle. */
@@ -874,10 +849,6 @@ function diffAttributes(dom, attrs, old) {
 	}
 }
 
-/** Retains a pool of Components for re-use, keyed on component name.
- *	Note: since component names are not unique or even necessarily available, these are primarily a form of sharding.
- *	@private
- */
 var components = {};
 
 function collectComponent(component) {
@@ -902,12 +873,6 @@ function createComponent(Ctor, props, context) {
 	return inst;
 }
 
-/** Set a component's `props` (generally derived from JSX attributes).
- *	@param {Object} props
- *	@param {Object} [opts]
- *	@param {boolean} [opts.renderSync=false]	If `true` and {@link options.syncComponentUpdates} is `true`, triggers synchronous rendering.
- *	@param {boolean} [opts.render=true]			If `false`, no render will be triggered.
- */
 function setComponentProps(component, props, opts, context, mountAll) {
 	if (component._disable) return;
 	component._disable = true;
@@ -1151,16 +1116,6 @@ function unmountComponent(component, remove) {
 	if (component.componentDidUnmount) component.componentDidUnmount();
 }
 
-/** Base Component class, for he ES6 Class method of creating Components
- *	@public
- *
- *	@example
- *	class MyFoo extends Component {
- *		render(props, state) {
- *			return <div />;
- *		}
- *	}
- */
 function Component(props, context) {
 	/** @private */
 	this._dirty = true;
@@ -1246,29 +1201,22 @@ extend(Component.prototype, {
 	render: function render() {}
 });
 
-/** Render JSX into a `parent` Element.
- *	@param {VNode} vnode		A (JSX) VNode to render
- *	@param {Element} parent		DOM element to render into
- *	@param {Element} [merge]	Attempt to re-use an existing DOM tree rooted at `merge`
- *	@public
- *
- *	@example
- *	// render a div into <body>:
- *	render(<div id="hello">hello!</div>, document.body);
- *
- *	@example
- *	// render a "Thing" component into #foo:
- *	const Thing = ({ name }) => <span>{ name }</span>;
- *	render(<Thing name="one" />, document.querySelector('#foo'));
- */
 function render$1(vnode, parent, merge) {
   return diff(merge, vnode, {}, false, parent);
 }
 
-var currencySymbols = {
-    GBP: '£',
-    EUR: '€',
-    USD: '$'
+var config = {
+    api: {
+        appId: 'da3a0568242846f99460614c0482fa22',
+        url: 'https://openexchangerates.org/api/latest.json'
+    },
+    currencies: ['GBP', 'EUR', 'USD'],
+    currencySymbols: {
+        GBP: '£',
+        EUR: '€',
+        USD: '$'
+    },
+    updateInterval: 30000
 };
 
 var CurrencyPanel = function (_Component) {
@@ -1280,32 +1228,38 @@ var CurrencyPanel = function (_Component) {
     }
 
     createClass(CurrencyPanel, [{
+        key: 'handleAmountChange',
+        value: function handleAmountChange(event) {
+            if (this.props.onAmountChange) {
+                this.props.onAmountChange(event.target.value);
+            }
+        }
+    }, {
+        key: 'handleCurrencyChange',
+        value: function handleCurrencyChange(currencyType) {
+            var _this2 = this;
+
+            return function (event) {
+                _this2.props.onCurrencyChange(currencyType);
+            };
+        }
+    }, {
         key: 'render',
         value: function render(_ref) {
+            var _this3 = this;
+
             var currency = _ref.currency;
             var secondCurrency = _ref.secondCurrency;
             var rate = _ref.rate;
             var amount = _ref.amount;
             var editable = _ref.editable;
-            var onAmountChange = _ref.onAmountChange;
-            var onCurrencyChange = _ref.onCurrencyChange;
-
-
-            function handleAmountChange(event) {
-                if (onAmountChange) {
-                    onAmountChange(event.target.value);
-                }
-            }
-
-            var handleCurrencyChange = function handleCurrencyChange(currencyType) {
-                return function (event) {
-                    onCurrencyChange(currencyType);
-                };
-            };
 
             var amountControl = void 0;
             if (editable) {
-                amountControl = h('input', { type: 'number', 'class': 'CurrencyPanel_amount', value: amount, onInput: handleAmountChange });
+                amountControl = h('input', { type: 'number',
+                    'class': 'CurrencyPanel_amount',
+                    value: amount,
+                    onInput: this.handleAmountChange.bind(this) });
             } else {
                 amountControl = h(
                     'div',
@@ -1316,7 +1270,7 @@ var CurrencyPanel = function (_Component) {
 
             var exchangeRate = '';
             if (rate) {
-                exchangeRate = currencySymbols[currency] + ' 1 = ' + currencySymbols[secondCurrency] + ' ' + rate.toFixed(4);
+                exchangeRate = config.currencySymbols[currency] + ' 1 = ' + (config.currencySymbols[secondCurrency] + ' ' + rate.toFixed(4));
             }
 
             return h(
@@ -1336,21 +1290,13 @@ var CurrencyPanel = function (_Component) {
                 h(
                     'div',
                     { 'class': 'CurrencyPanel_switch' },
-                    h(
-                        'button',
-                        { 'class': 'CurrencyPanel_switchButton', onClick: handleCurrencyChange('GBP') },
-                        'GBP'
-                    ),
-                    h(
-                        'button',
-                        { 'class': 'CurrencyPanel_switchButton', onClick: handleCurrencyChange('EUR') },
-                        'EUR'
-                    ),
-                    h(
-                        'button',
-                        { 'class': 'CurrencyPanel_switchButton', onClick: handleCurrencyChange('USD') },
-                        'USD'
-                    )
+                    config.currencies.map(function (currency) {
+                        return h(
+                            'button',
+                            { 'class': 'CurrencyPanel_switchButton', onClick: _this3.handleCurrencyChange.call(_this3, currency) },
+                            currency
+                        );
+                    })
                 )
             );
         }
@@ -1358,16 +1304,70 @@ var CurrencyPanel = function (_Component) {
     return CurrencyPanel;
 }(Component);
 
-var currencies = ['GBP', 'EUR', 'USD'];
+var ratesUrl = config.api.url + '?&app_id=' + config.api.appId;
 
 function getRates() {
-    // return fetch(ratesUrl).then(response => {
-    //     return response.json();
-    // }).then(result => {
-    //     return calculateRates(result.rates);
-    // });
+    return fetch(ratesUrl).then(function (response) {
+        return response.json();
+    }).then(function (result) {
+        return calculateRates(result.rates);
+    });
+}
 
-    return Promise.resolve({ "GBP": { "GBP": 1, "EUR": 1.1238673057116992, "USD": 1.2217276940011947 }, "EUR": { "GBP": 0.889784759212958, "EUR": 1, "USD": 1.0870746820306554 }, "USD": { "GBP": 0.818513, "EUR": 0.9199, "USD": 1 } });
+function calculateRates(usdRates) {
+    var rates = {};
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = config.currencies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var currency = _step.value;
+
+            rates[currency] = {};
+            var currencyRate = usdRates[currency];
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = config.currencies[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var nestedCurrency = _step2.value;
+
+                    var nestedCurrencyRate = usdRates[nestedCurrency];
+                    rates[currency][nestedCurrency] = nestedCurrencyRate / currencyRate;
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
+    }
+
+    return rates;
 }
 
 function updateResultingAmount(state) {
@@ -1404,37 +1404,30 @@ var ExchangeWidget = function (_Component) {
         key: 'componentDidMount',
         value: function componentDidMount() {
             this.updateRates();
-
-            //this.timer = setInterval(this.updateRates, 3000);
+            this.timer = setInterval(this.updateRates.bind(this), config.updateInterval);
         }
     }, {
         key: 'componentWillUnmount',
         value: function componentWillUnmount() {
-            //clearInterval(this.timer);
+            clearInterval(this.timer);
         }
     }, {
         key: 'changeFromCurrency',
         value: function changeFromCurrency(newCurrency) {
-            var state = this.state;
-            state.from.currency = newCurrency;
-            updateResultingAmount(state);
-            this.setState(state);
+            this.state.from.currency = newCurrency;
+            this.updateState();
         }
     }, {
         key: 'changeToCurrency',
         value: function changeToCurrency(newCurrency) {
-            var state = this.state;
-            state.to.currency = newCurrency;
-            updateResultingAmount(state);
-            this.setState(state);
+            this.state.to.currency = newCurrency;
+            this.updateState();
         }
     }, {
         key: 'changeAmount',
         value: function changeAmount(amount) {
-            var state = this.state;
-            state.from.amount = amount;
-            updateResultingAmount(state);
-            this.setState(state);
+            this.state.from.amount = amount;
+            this.updateState();
         }
     }, {
         key: 'updateRates',
@@ -1442,12 +1435,15 @@ var ExchangeWidget = function (_Component) {
             var _this2 = this;
 
             getRates().then(function (rates) {
-                console.log(rates);
-                var state = _this2.state;
-                state.rates = rates;
-                updateResultingAmount(state);
-                _this2.setState(state);
+                _this2.state.rates = rates;
+                _this2.updateState();
             });
+        }
+    }, {
+        key: 'updateState',
+        value: function updateState() {
+            updateResultingAmount(this.state);
+            this.setState(this.state);
         }
     }, {
         key: 'render',
