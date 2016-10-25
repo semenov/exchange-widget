@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Exchange widget demo </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="src/main.css">
+    </head>
+    <body>
+        <div id="exchange-widget"></div>
+
+        <script src="dist/bundle.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var container = document.getElementById('exchange-widget');
+                ExchangeWidget.run(container);
+            });
+        </script>
+
+    </body>
+</html>
